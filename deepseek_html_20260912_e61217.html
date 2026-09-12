@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ticket Booking App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px 15px;
+      color: #fff;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+
+    .counter {
+      font-size: 1.1rem;
+      background: rgba(0, 0, 0, 0.25);
+      display: inline-block;
+      padding: 8px 18px;
+      border-radius: 30px;
+    }
+
+    #availableCount {
+      font-weight: bold;
+      color: #ffd93d;
+      font-size: 1.3rem;
+    }
+
+    .booking-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    #customerName {
+      flex: 1;
+      padding: 12px 15px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    #bookBtn {
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: none;
+      background: #ffd93d;
+      color: #1e3c72;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.2s;
+    }
+
+    #bookBtn:hover {
+      background: #ffcc00;
+      transform: translateY(-2px);
+    }
+
+    #bookBtn:disabled {
+      background: #888;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .message {
+      text-align: center;
+      min-height: 22px;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    .message.success { color: #6bff8b; }
+    .message.error   { color: #ff7b7b; }
+
+    .seats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .seat {
+      aspect-ratio: 1 / 1;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .seat:hover:not(.booked) {
+      background: rgba(255, 217, 61, 0.4);
+      transform: scale(1.08);
+    }
+
+    .seat.selected {
+      background: #ffd93d;
+      color: #1e3c72;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(255, 217, 61, 0.8);
+    }
+
+    .seat.booked {
+      background: #444;
+      color: #888;
+      cursor: not-allowed;
+      border-color: #333;
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 480px) {
+      .booking-form { flex-direction: column; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎟️ Event Ticket Booking</h1>
+      <div class="counter">
+        <span id="availableCount">50</span> tickets available
+      </div>
+    </header>
+
+    <div class="booking-form">
+      <input type="text" id="customerName" placeholder="Enter your name" />
+      <button id="bookBtn">Book Selected Ticket</button>
+    </div>
+
+    <p id="message" class="message"></p>
+
+    <div class="seats-grid" id="seatsGrid"></div>
+  </div>
+
+  <script>
+    const TOTAL_TICKETS = 50;
+    let availableTickets = TOTAL_TICKETS;
+    let selectedSeat = null;
+
+    const seatsGrid      = document.getElementById('seatsGrid');
+    const availableCount = document.getElementById('availableCount');
+    const bookBtn        = document.getElementById('bookBtn');
+    const customerName   = document.getElementById('customerName');
+    const message        = document.getElementById('message');
+
+    function createSeats() {
+      seatsGrid.innerHTML = '';
+      for (let i = 1; i <= TOTAL_TICKETS; i++) {
+        const seat = document.createElement('div');
+        seat.classList.add('seat');
+        seat.dataset.number = i;
+        seat.textContent = i;
+        seat.addEventListener('click', () => selectSeat(seat));
+        seatsGrid.appendChild(seat);
+      }
+    }
+
+    function selectSeat(seat) {
+      if (seat.classList.contains('booked')) return;
+      if (selectedSeat) selectedSeat.classList.remove('selected');
+      if (selectedSeat === seat) {
+        selectedSeat = null;
+      } else {
+        seat.classList.add('selected');
+        selectedSeat = seat;
+      }
+    }
+
+    bookBtn.addEventListener('click', () => {
+      const name = customerName.value.trim();
+
+      if (!name) {
+        showMessage('Please enter your name.', 'error');
+        return;
+      }
+      if (!selectedSeat) {
+        showMessage('Please select a ticket first.', 'error');
+        return;
+      }
+      if (availableTickets <= 0) {
+        showMessage('Sorry, all tickets are sold out!', 'error');
+        return;
+      }
+
+      selectedSeat.classList.remove('selected');
+      selectedSeat.classList.add('booked');
+      selectedSeat.textContent = '✕';
+
+      availableTickets--;
+      availableCount.textContent = availableTickets;
+
+      showMessage(`✅ Ticket #${selectedSeat.dataset.number} booked for ${name}!`, 'success');
+
+      selectedSeat = null;
+      customerName.value = '';
+
+      if (availableTickets === 0) {
+        bookBtn.disabled = true;
+        showMessage('🎉 All tickets sold out!', 'success');
+      }
+    });
+
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = `message ${type}`;
+      setTimeout(() => {
+        if (message.textContent === text) message.textContent = '';
+      }, 4000);
+    }
+
+    createSeats();
+  </script>
+</body>
+</html>
