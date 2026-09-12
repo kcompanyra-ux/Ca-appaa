@@ -1,253 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ticket Booking App</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ticket Booking</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 30px 15px;
-      color: #fff;
-    }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
 
-    .container {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(12px);
-      border-radius: 20px;
-      padding: 30px;
-      max-width: 700px;
-      width: 100%;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 1.8rem; margin-bottom: 6px; }
+  .subtitle { color: #94a3b8; font-size: 0.9rem; }
 
-    header {
-      text-align: center;
-      margin-bottom: 25px;
-    }
+  main { max-width: 720px; margin: 0 auto; }
 
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 10px;
-    }
+  .stats {
+    display: flex; gap: 16px; justify-content: center; margin-bottom: 24px;
+  }
+  .stat {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 16px 32px; text-align: center; min-width: 110px;
+  }
+  .stat span { display: block; font-size: 1.8rem; font-weight: 700; color: #38bdf8; }
+  .stat label {
+    font-size: 0.75rem; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
 
-    .counter {
-      font-size: 1.1rem;
-      background: rgba(0, 0, 0, 0.25);
-      display: inline-block;
-      padding: 8px 18px;
-      border-radius: 30px;
-    }
+  .seats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    gap: 10px;
+  }
 
-    #availableCount {
-      font-weight: bold;
-      color: #ffd93d;
-      font-size: 1.3rem;
-    }
+  .seat {
+    aspect-ratio: 1; border-radius: 10px; border: 1px solid #334155;
+    background: #1e293b; color: #e2e8f0; font-weight: 600; font-size: 0.95rem;
+    cursor: pointer; transition: all 0.15s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .seat:hover:not(:disabled) {
+    background: #334155; border-color: #38bdf8; transform: translateY(-2px);
+  }
+  .seat.booked {
+    background: #450a0a; border-color: #7f1d1d; color: #f87171;
+    cursor: not-allowed; text-decoration: line-through; opacity: 0.7;
+  }
+  .seat.just-booked { animation: pop 0.4s ease; }
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
 
-    .booking-form {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1e293b; border: 1px solid #334155;
+    padding: 12px 24px; border-radius: 10px;
+    transition: transform 0.3s ease; pointer-events: none; z-index: 100;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: #dc2626; color: #fca5a5; }
+  .toast.success { border-color: #16a34a; color: #86efac; }
 
-    #customerName {
-      flex: 1;
-      padding: 12px 15px;
-      border-radius: 10px;
-      border: none;
-      font-size: 1rem;
-      outline: none;
-    }
-
-    #bookBtn {
-      padding: 12px 20px;
-      border-radius: 10px;
-      border: none;
-      background: #ffd93d;
-      color: #1e3c72;
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.15s, background 0.2s;
-    }
-
-    #bookBtn:hover {
-      background: #ffcc00;
-      transform: translateY(-2px);
-    }
-
-    #bookBtn:disabled {
-      background: #888;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .message {
-      text-align: center;
-      min-height: 22px;
-      margin-bottom: 15px;
-      font-weight: 500;
-    }
-
-    .message.success { color: #6bff8b; }
-    .message.error   { color: #ff7b7b; }
-
-    .seats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .seat {
-      aspect-ratio: 1 / 1;
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s;
-      user-select: none;
-    }
-
-    .seat:hover:not(.booked) {
-      background: rgba(255, 217, 61, 0.4);
-      transform: scale(1.08);
-    }
-
-    .seat.selected {
-      background: #ffd93d;
-      color: #1e3c72;
-      transform: scale(1.1);
-      box-shadow: 0 0 15px rgba(255, 217, 61, 0.8);
-    }
-
-    .seat.booked {
-      background: #444;
-      color: #888;
-      cursor: not-allowed;
-      border-color: #333;
-      text-decoration: line-through;
-      opacity: 0.5;
-    }
-
-    @media (max-width: 480px) {
-      .booking-form { flex-direction: column; }
-      h1 { font-size: 1.4rem; }
-    }
-  </style>
+  footer { text-align: center; margin-top: 32px; color: #64748b; font-size: 0.85rem; }
+  footer .online  { color: #4ade80; }
+  footer .offline { color: #f87171; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🎟️ Event Ticket Booking</h1>
-      <div class="counter">
-        <span id="availableCount">50</span> tickets available
-      </div>
-    </header>
 
-    <div class="booking-form">
-      <input type="text" id="customerName" placeholder="Enter your name" />
-      <button id="bookBtn">Book Selected Ticket</button>
-    </div>
+<header>
+  <h1>🎟️ Ticket Booking</h1>
+  <p class="subtitle">Real-time · Synced across all devices</p>
+</header>
 
-    <p id="message" class="message"></p>
-
-    <div class="seats-grid" id="seatsGrid"></div>
+<main>
+  <div class="stats">
+    <div class="stat"><span id="availableCount">50</span><label>Available</label></div>
+    <div class="stat"><span id="bookedCount">0</span><label>Booked</label></div>
   </div>
+  <div id="seats" class="seats-grid"></div>
+  <div id="toast" class="toast"></div>
+</main>
 
-  <script>
-    const TOTAL_TICKETS = 50;
-    let availableTickets = TOTAL_TICKETS;
-    let selectedSeat = null;
+<footer><p id="status">Connecting…</p></footer>
 
-    const seatsGrid      = document.getElementById('seatsGrid');
-    const availableCount = document.getElementById('availableCount');
-    const bookBtn        = document.getElementById('bookBtn');
-    const customerName   = document.getElementById('customerName');
-    const message        = document.getElementById('message');
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, doc, onSnapshot, runTransaction,
+  getDocs, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    function createSeats() {
-      seatsGrid.innerHTML = '';
-      for (let i = 1; i <= TOTAL_TICKETS; i++) {
-        const seat = document.createElement('div');
-        seat.classList.add('seat');
-        seat.dataset.number = i;
-        seat.textContent = i;
-        seat.addEventListener('click', () => selectSeat(seat));
-        seatsGrid.appendChild(seat);
+/* ─────────────────────────────────────────────────────────────
+   ⬇️  PASTE YOUR FIREBASE CONFIG HERE  ⬇️
+   Get it from: Firebase Console → ⚙️ Project Settings → Your apps → </> Web
+   ───────────────────────────────────────────────────────────── */
+const firebaseConfig = {
+  apiKey: "AIzaSyB7LwM1oNVjfjs2fgdd9OOASBqkDm7DkK0",
+  authDomain: "ticket-d2f30.firebaseapp.com",
+  projectId: "ticket-d2f30",
+  storageBucket: "ticket-d2f30.firebasestorage.app",
+  messagingSenderId: "225223962663",
+  appId: "1:225223962663:web:4e8e118ede45defaf61e02"
+};
+/* ───────────────────────────────────────────────────────────── */
+
+const TOTAL = 50;
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const ticketsCol = collection(db, "tickets");
+
+const seatsEl     = document.getElementById("seats");
+const availableEl = document.getElementById("availableCount");
+const bookedEl    = document.getElementById("bookedCount");
+const statusEl    = document.getElementById("status");
+const toastEl     = document.getElementById("toast");
+
+let toastTimer;
+function showToast(msg, type = "success") {
+  toastEl.textContent = msg;
+  toastEl.className = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (toastEl.className = "toast"), 2500);
+}
+
+const pad = (n) => `T${String(n).padStart(3, "0")}`;
+
+// Build the 50-seat grid once
+const seatEls = new Map();
+function buildGrid() {
+  seatsEl.innerHTML = "";
+  seatEls.clear();
+  for (let i = 1; i <= TOTAL; i++) {
+    const btn = document.createElement("button");
+    btn.className = "seat";
+    btn.textContent = i;
+    btn.disabled = true; // until first snapshot
+    btn.addEventListener("click", () => book(i));
+    seatsEl.appendChild(btn);
+    seatEls.set(i, btn);
+  }
+}
+
+// Render tickets that still exist in Firestore
+function render(existingNumbers) {
+  const existing = new Set(existingNumbers);
+  let available = 0;
+  for (let i = 1; i <= TOTAL; i++) {
+    const btn = seatEls.get(i);
+    if (existing.has(i)) {
+      btn.classList.remove("booked");
+      btn.disabled = false;
+      available++;
+    } else {
+      if (!btn.classList.contains("booked")) {
+        btn.classList.add("just-booked");
+        setTimeout(() => btn.classList.remove("just-booked"), 400);
       }
+      btn.classList.add("booked");
+      btn.disabled = true;
     }
+  }
+  availableEl.textContent = available;
+  bookedEl.textContent = TOTAL - available;
+}
 
-    function selectSeat(seat) {
-      if (seat.classList.contains('booked')) return;
-      if (selectedSeat) selectedSeat.classList.remove('selected');
-      if (selectedSeat === seat) {
-        selectedSeat = null;
-      } else {
-        seat.classList.add('selected');
-        selectedSeat = seat;
-      }
-    }
-
-    bookBtn.addEventListener('click', () => {
-      const name = customerName.value.trim();
-
-      if (!name) {
-        showMessage('Please enter your name.', 'error');
-        return;
-      }
-      if (!selectedSeat) {
-        showMessage('Please select a ticket first.', 'error');
-        return;
-      }
-      if (availableTickets <= 0) {
-        showMessage('Sorry, all tickets are sold out!', 'error');
-        return;
-      }
-
-      selectedSeat.classList.remove('selected');
-      selectedSeat.classList.add('booked');
-      selectedSeat.textContent = '✕';
-
-      availableTickets--;
-      availableCount.textContent = availableTickets;
-
-      showMessage(`✅ Ticket #${selectedSeat.dataset.number} booked for ${name}!`, 'success');
-
-      selectedSeat = null;
-      customerName.value = '';
-
-      if (availableTickets === 0) {
-        bookBtn.disabled = true;
-        showMessage('🎉 All tickets sold out!', 'success');
-      }
+// Booking = atomic DELETE of the ticket doc
+async function book(number) {
+  const ref = doc(db, "tickets", pad(number));
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error("Already booked");
+      tx.delete(ref);
     });
+    showToast(`✅ Ticket #${number} booked!`, "success");
+  } catch (err) {
+    showToast(`❌ ${err.message}`, "error");
+  }
+}
 
-    function showMessage(text, type) {
-      message.textContent = text;
-      message.className = `message ${type}`;
-      setTimeout(() => {
-        if (message.textContent === text) message.textContent = '';
-      }, 4000);
+// Real-time listener — every device sees deletes instantly
+function listen() {
+  statusEl.textContent = "Connecting…";
+  statusEl.className = "";
+
+  onSnapshot(
+    ticketsCol,
+    (snap) => {
+      const nums = snap.docs.map((d) => d.data().number).filter(Boolean);
+      render(nums);
+      statusEl.textContent = `🟢 Live · ${new Date().toLocaleTimeString()}`;
+      statusEl.className = "online";
+    },
+    (err) => {
+      console.error(err);
+      statusEl.textContent = "🔴 Disconnected";
+      statusEl.className = "offline";
     }
+  );
+}
 
-    createSeats();
-  </script>
+// Seed 50 tickets once (only if collection is empty)
+async function seed() {
+  const snap = await getDocs(ticketsCol);
+  if (snap.size > 0) return;
+  const batch = writeBatch(db);
+  for (let i = 1; i <= TOTAL; i++) {
+    batch.set(doc(db, "tickets", pad(i)), { number: i });
+  }
+  await batch.commit();
+  console.log("Seeded 50 tickets");
+}
+
+(async function init() {
+  buildGrid();
+  try {
+    await seed();
+    listen();
+  } catch (e) {
+    console.error(e);
+    showToast("Firebase error — check config", "error");
+  }
+})();
+</script>
 </body>
 </html>
